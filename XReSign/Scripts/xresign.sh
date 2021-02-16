@@ -119,5 +119,8 @@ rm -rf "$APPDIR"
 rm "$TMPDIR/components.txt"
 rm "$TMPDIR/provisioning.plist"
 rm "$TMPDIR/entitlements"*".plist"
+if [ -z "$(ls -A "$TMPDIR")" ]; then
+    rm -d "$TMPDIR"
+fi
 
 echo "XReSign FINISHED"

@@ -51,6 +51,7 @@ done
 echo "Start resign the app..."
 
 OUTDIR=$(dirname "${SOURCEIPA}")
+OUTDIR="$PWD/$OUTDIR"
 TMPDIR="$OUTDIR/tmp"
 APPDIR="$TMPDIR/app"
 

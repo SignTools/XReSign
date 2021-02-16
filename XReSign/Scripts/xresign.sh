@@ -62,7 +62,7 @@ APPLICATION=$(ls "$APPDIR/Payload/")
 if [ -z "${MOBILEPROV}" ]; then
     echo "Sign process using existing provisioning profile from payload"
 else
-    echo "Coping provisioning profile into application payload"
+    echo "Copying provisioning profile into application payload"
     cp "$MOBILEPROV" "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision"
 fi
 

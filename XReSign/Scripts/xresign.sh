@@ -82,6 +82,9 @@ else
     /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $BUNDLEID" "$APPDIR/Payload/$APPLICATION/Info.plist"
 fi
 
+APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APPDIR/Payload/$APPLICATION/Info.plist")
+TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
+
 echo "Get list of components and resign with certificate: $DEVELOPER"
 find -d "$APPDIR" \( -name "*.app" -o -name "*.appex" -o -name "*.framework" -o -name "*.dylib" \) >"$TMPDIR/components.txt"
 
@@ -90,9 +93,16 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
     if [[ ! -z "${BUNDLEID}" ]] && [[ "$line" == *".appex"* ]]; then
         echo "Changing .appex BundleID with : $BUNDLEID.extra$var"
         /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $BUNDLEID.extra$var" "$line/Info.plist"
-        var=$((var + 1))
     fi
-    /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements.plist" "$line"
+    cp "$TMPDIR/entitlements.plist" "$TMPDIR/entitlements$var.plist"
+    if [[ -f "$line/Info.plist" ]]; then
+        EXTRA_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$line/Info.plist")
+    else
+        EXTRA_ID="$APP_ID.extra$var"
+    fi
+    /usr/libexec/PlistBuddy -c "Set:application-identifier $TEAM_ID.$EXTRA_ID" "$TMPDIR/entitlements$var.plist"
+    /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements$var.plist" "$line"
+    var=$((var + 1))
 done <"$TMPDIR/components.txt"
 
 echo "Creating the signed ipa"
@@ -107,6 +117,6 @@ echo "Clear temporary files"
 rm -rf "$APPDIR"
 rm "$TMPDIR/components.txt"
 rm "$TMPDIR/provisioning.plist"
-rm "$TMPDIR/entitlements.plist"
+rm "$TMPDIR/entitlements"*".plist"
 
 echo "XReSign FINISHED"

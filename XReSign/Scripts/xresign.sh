@@ -56,7 +56,13 @@ TMPDIR="$OUTDIR/tmp"
 APPDIR="$TMPDIR/app"
 
 mkdir -p "$APPDIR"
-unzip -qo "$SOURCEIPA" -d "$APPDIR"
+if command -v 7z &>/dev/null; then
+    echo "Extract app using 7zip"
+    7z x "$SOURCEIPA" -o"$APPDIR" >/dev/null 2>&1
+else
+    echo "Extract app using unzip"
+    unzip -qo "$SOURCEIPA" -d "$APPDIR"
+fi
 
 APPLICATION=$(ls "$APPDIR/Payload/")
 

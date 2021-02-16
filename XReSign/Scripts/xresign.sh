@@ -17,32 +17,36 @@ where:
 -p  path to mobile provisioning file (Optional)
 -b  bundle identifier (Optional)"
 
+while getopts s:c:e:p:b: option; do
+    case "${option}" in
 
-while getopts s:c:e:p:b: option
-do
-    case "${option}"
-    in
-      s) SOURCEIPA=${OPTARG}
-         ;;
-      c) DEVELOPER=${OPTARG}
-         ;;
-      e) ENTITLEMENTS=${OPTARG}
-         ;;
-      p) MOBILEPROV=${OPTARG}
-         ;;
-      b) BUNDLEID=${OPTARG}
-         ;;
-     \?) echo "invalid option: -$OPTARG" >&2
-         echo "$usage" >&2
-         exit 1
-         ;;
-      :) echo "missing argument for -$OPTARG" >&2
-         echo "$usage" >&2
-         exit 1
-         ;;
+    s)
+        SOURCEIPA=${OPTARG}
+        ;;
+    c)
+        DEVELOPER=${OPTARG}
+        ;;
+    e)
+        ENTITLEMENTS=${OPTARG}
+        ;;
+    p)
+        MOBILEPROV=${OPTARG}
+        ;;
+    b)
+        BUNDLEID=${OPTARG}
+        ;;
+    \?)
+        echo "invalid option: -$OPTARG" >&2
+        echo "$usage" >&2
+        exit 1
+        ;;
+    :)
+        echo "missing argument for -$OPTARG" >&2
+        echo "$usage" >&2
+        exit 1
+        ;;
     esac
 done
-
 
 echo "Start resign the app..."
 
@@ -50,12 +54,10 @@ OUTDIR=$(dirname "${SOURCEIPA}")
 TMPDIR="$OUTDIR/tmp"
 APPDIR="$TMPDIR/app"
 
-
 mkdir -p "$APPDIR"
 unzip -qo "$SOURCEIPA" -d "$APPDIR"
 
 APPLICATION=$(ls "$APPDIR/Payload/")
-
 
 if [ -z "${MOBILEPROV}" ]; then
     echo "Sign process using existing provisioning profile from payload"
@@ -66,8 +68,8 @@ fi
 
 echo "Extract entitlements from mobileprovisioning"
 if [ -z "${ENTITLEMENTS}" ]; then
-    security cms -D -i "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision" > "$TMPDIR/provisioning.plist"
-  /usr/libexec/PlistBuddy -x -c 'Print:Entitlements' "$TMPDIR/provisioning.plist" > "$TMPDIR/entitlements.plist"
+    security cms -D -i "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision" >"$TMPDIR/provisioning.plist"
+    /usr/libexec/PlistBuddy -x -c 'Print:Entitlements' "$TMPDIR/provisioning.plist" >"$TMPDIR/entitlements.plist"
 else
     cp ${ENTITLEMENTS} "$TMPDIR/entitlements.plist"
     echo "${ENTITLEMENTS}"
@@ -80,20 +82,18 @@ else
     /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $BUNDLEID" "$APPDIR/Payload/$APPLICATION/Info.plist"
 fi
 
-
 echo "Get list of components and resign with certificate: $DEVELOPER"
-find -d "$APPDIR" \( -name "*.app" -o -name "*.appex" -o -name "*.framework" -o -name "*.dylib" \) > "$TMPDIR/components.txt"
+find -d "$APPDIR" \( -name "*.app" -o -name "*.appex" -o -name "*.framework" -o -name "*.dylib" \) >"$TMPDIR/components.txt"
 
 var=$((0))
 while IFS='' read -r line || [[ -n "$line" ]]; do
-	if [[ ! -z "${BUNDLEID}" ]] && [[ "$line" == *".appex"* ]]; then
-	   echo "Changing .appex BundleID with : $BUNDLEID.extra$var"
-	   /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $BUNDLEID.extra$var" "$line/Info.plist"
-	   var=$((var+1))
-	fi    
+    if [[ ! -z "${BUNDLEID}" ]] && [[ "$line" == *".appex"* ]]; then
+        echo "Changing .appex BundleID with : $BUNDLEID.extra$var"
+        /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $BUNDLEID.extra$var" "$line/Info.plist"
+        var=$((var + 1))
+    fi
     /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements.plist" "$line"
-done < "$TMPDIR/components.txt"
-
+done <"$TMPDIR/components.txt"
 
 echo "Creating the signed ipa"
 cd "$APPDIR"
@@ -102,7 +102,6 @@ filename="${filename%.*}-xresign.ipa"
 zip -qr "../$filename" *
 cd ..
 mv "$filename" "$OUTDIR"
-
 
 echo "Clear temporary files"
 rm -rf "$APPDIR"

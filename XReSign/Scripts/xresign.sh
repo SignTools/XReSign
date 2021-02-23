@@ -38,12 +38,12 @@ while getopts s:c:e:p:b:a option; do
         ALL_DEVICES=1
         ;;
     \?)
-        echo "invalid option: -$OPTARG" >&2
+        echo "Invalid option: -$OPTARG" >&2
         echo "$usage" >&2
         exit 1
         ;;
     :)
-        echo "missing argument for -$OPTARG" >&2
+        echo "Missing argument for -$OPTARG" >&2
         echo "$usage" >&2
         exit 1
         ;;
@@ -55,7 +55,7 @@ if [ -z "$SOURCEIPA" ] || [ -z "$DEVELOPER" ]; then
     exit 1
 fi
 
-echo "Start resign the app..."
+echo "XReSign started"
 
 OUTDIR=$(dirname "${SOURCEIPA}")
 OUTDIR="$PWD/$OUTDIR"
@@ -64,23 +64,23 @@ APPDIR="$TMPDIR/app"
 
 mkdir -p "$APPDIR"
 if command -v 7z &>/dev/null; then
-    echo "Extract app using 7zip"
+    echo "Extracting app using 7zip"
     7z x "$SOURCEIPA" -o"$APPDIR" >/dev/null 2>&1
 else
-    echo "Extract app using unzip"
+    echo "Extracting app using unzip"
     unzip -qo "$SOURCEIPA" -d "$APPDIR"
 fi
 
 APPLICATION=$(ls "$APPDIR/Payload/")
 
 if [ -z "${MOBILEPROV}" ]; then
-    echo "Sign process using existing provisioning profile from payload"
+    echo "Signing using app's existing provisioning profile"
 else
-    echo "Copying provisioning profile into application payload"
+    echo "Signing using user-provided provisioning profile"
     cp "$MOBILEPROV" "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision"
 fi
 
-echo "Extract entitlements from mobileprovisioning"
+echo "Extracting entitlements from provisioning profile"
 if [ -z "${ENTITLEMENTS}" ]; then
     security cms -D -i "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision" >"$TMPDIR/provisioning.plist"
     /usr/libexec/PlistBuddy -x -c 'Print:Entitlements' "$TMPDIR/provisioning.plist" >"$TMPDIR/entitlements.plist"
@@ -92,7 +92,7 @@ fi
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APPDIR/Payload/$APPLICATION/Info.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
 
-echo "Get list of components and resign with certificate: $DEVELOPER"
+echo "Building list of app components"
 find -d "$APPDIR" \( -name "*.app" -o -name "*.appex" -o -name "*.framework" -o -name "*.dylib" \) >"$TMPDIR/components.txt"
 
 var=$((0))
@@ -112,6 +112,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         fi
 
         if [[ -n "$ALL_DEVICES" ]]; then
+            echo "Patching supported devices"
             /usr/libexec/PlistBuddy -c "Delete :UISupportedDevices" "$line/Info.plist" || true
             # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html
             /usr/libexec/PlistBuddy -c "Delete :UIDeviceFamily" "$line/Info.plist" || true
@@ -132,7 +133,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
     var=$((var + 1))
 done <"$TMPDIR/components.txt"
 
-echo "Creating the signed ipa"
+echo "Creating signed IPA"
 cd "$APPDIR"
 filename=$(basename "$APPLICATION")
 filename="${filename%.*}-xresign.ipa"
@@ -140,7 +141,7 @@ zip -qr "../$filename" *
 cd ..
 mv "$filename" "$OUTDIR"
 
-echo "Clear temporary files"
+echo "Cleaning temporary files"
 rm -rf "$APPDIR"
 rm "$TMPDIR/components.txt"
 rm "$TMPDIR/provisioning.plist"
@@ -149,4 +150,4 @@ if [ -z "$(ls -A "$TMPDIR")" ]; then
     rm -d "$TMPDIR"
 fi
 
-echo "XReSign FINISHED"
+echo "XReSign finished"

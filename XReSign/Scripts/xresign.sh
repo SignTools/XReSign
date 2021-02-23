@@ -8,16 +8,14 @@ set -e
 #  Copyright © 2017 xndrs. All rights reserved.
 #
 
-usage="Usage example:
-$(basename "$0") -s path -c certificate [-e entitlements] [-p path] [-b identifier]
+usage="Usage: $(basename "$0") -s APP_PATH -c CERT_NAME [-e ENTITLEMENTS_PATH_PATH] [-p PROV_PATH] [-b ID]
 
-where:
--s  path to ipa file which you want to sign/resign
--c  signing certificate Common Name from Keychain
--e  new entitlements to change (Optional)
+-s  path to input app to sign
+-c  Common Name of signing certificate in Keychain
+-e  new entitlements to use for app (Optional)
 -p  path to mobile provisioning file (Optional)
--b  bundle identifier (Optional)
--a  patch Info.plist to allow installation on all devices (Optional)"
+-b  new bundle identifier (Optional)
+-a  allow app installation on all devices (Optional)"
 
 while getopts s:c:e:p:b:a option; do
     case "${option}" in

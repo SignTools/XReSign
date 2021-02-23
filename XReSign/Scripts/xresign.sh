@@ -50,6 +50,11 @@ while getopts s:c:e:p:b:a option; do
     esac
 done
 
+if [ -z "$SOURCEIPA" ] || [ -z "$DEVELOPER" ]; then
+    echo "$usage" >&2
+    exit 1
+fi
+
 echo "Start resign the app..."
 
 OUTDIR=$(dirname "${SOURCEIPA}")

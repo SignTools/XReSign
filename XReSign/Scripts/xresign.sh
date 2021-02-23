@@ -16,11 +16,11 @@ where:
 -c  signing certificate Common Name from Keychain
 -e  new entitlements to change (Optional)
 -p  path to mobile provisioning file (Optional)
--b  bundle identifier (Optional)"
+-b  bundle identifier (Optional)
+-a  patch Info.plist to allow installation on all devices (Optional)"
 
-while getopts s:c:e:p:b: option; do
+while getopts s:c:e:p:b:a option; do
     case "${option}" in
-
     s)
         SOURCEIPA=${OPTARG}
         ;;
@@ -35,6 +35,9 @@ while getopts s:c:e:p:b: option; do
         ;;
     b)
         BUNDLEID=${OPTARG}
+        ;;
+    a)
+        ALL_DEVICES=1
         ;;
     \?)
         echo "invalid option: -$OPTARG" >&2
@@ -105,6 +108,14 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
     cp "$TMPDIR/entitlements.plist" "$TMPDIR/entitlements$var.plist"
     if [[ -f "$line/Info.plist" ]]; then
         EXTRA_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$line/Info.plist")
+        if [[ -n "$ALL_DEVICES" ]]; then
+            /usr/libexec/PlistBuddy -c "Delete :UISupportedDevices" "$line/Info.plist" || true
+            # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html
+            /usr/libexec/PlistBuddy -c "Delete :UIDeviceFamily" "$line/Info.plist" || true
+            /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily array" "$line/Info.plist"
+            /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:0 integer 1" "$line/Info.plist"
+            /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:1 integer 2" "$line/Info.plist"
+        fi
     else
         EXTRA_ID="$APP_ID.extra$var"
     fi

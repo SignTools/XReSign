@@ -89,13 +89,6 @@ else
     echo "${ENTITLEMENTS}"
 fi
 
-if [ -z "${BUNDLEID}" ]; then
-    echo "Sign process using existing bundle identifier from payload"
-else
-    echo "Changing BundleID with : $BUNDLEID"
-    /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $BUNDLEID" "$APPDIR/Payload/$APPLICATION/Info.plist"
-fi
-
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APPDIR/Payload/$APPLICATION/Info.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
 
@@ -104,13 +97,20 @@ find -d "$APPDIR" \( -name "*.app" -o -name "*.appex" -o -name "*.framework" -o 
 
 var=$((0))
 while IFS='' read -r line || [[ -n "$line" ]]; do
-    if [[ ! -z "${BUNDLEID}" ]] && [[ "$line" == *".appex"* ]]; then
-        echo "Changing .appex BundleID with : $BUNDLEID.extra$var"
-        /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $BUNDLEID.extra$var" "$line/Info.plist"
-    fi
-    cp "$TMPDIR/entitlements.plist" "$TMPDIR/entitlements$var.plist"
-    if [[ -f "$line/Info.plist" ]]; then
-        EXTRA_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$line/Info.plist")
+    echo "Processing component $line"
+
+    if [[ "$line" == *".app" ]] || [[ "$line" == *".appex" ]]; then
+        cp "$TMPDIR/entitlements.plist" "$TMPDIR/entitlements$var.plist"
+        if [[ -n "${BUNDLEID}" ]]; then
+            if [[ "$line" == *".app" ]]; then
+                EXTRA_ID="$BUNDLEID"
+            else
+                EXTRA_ID="$BUNDLEID.extra$var"
+            fi
+            echo "Setting bundle ID to $EXTRA_ID"
+            /usr/libexec/PlistBuddy -c "Set:CFBundleIdentifier $EXTRA_ID" "$line/Info.plist"
+        fi
+
         if [[ -n "$ALL_DEVICES" ]]; then
             /usr/libexec/PlistBuddy -c "Delete :UISupportedDevices" "$line/Info.plist" || true
             # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html
@@ -119,11 +119,16 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
             /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:0 integer 1" "$line/Info.plist"
             /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:1 integer 2" "$line/Info.plist"
         fi
+
+        EXTRA_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$line/Info.plist")
+        echo "Signing with application ID $TEAM_ID.$EXTRA_ID"
+        /usr/libexec/PlistBuddy -c "Set :application-identifier $TEAM_ID.$EXTRA_ID" "$TMPDIR/entitlements$var.plist"
+        /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements$var.plist" "$line"
     else
-        EXTRA_ID="$APP_ID.extra$var"
+        echo "Signing with original entitlements"
+        /usr/bin/codesign --continue -f -s "$DEVELOPER" "$line"
     fi
-    /usr/libexec/PlistBuddy -c "Set:application-identifier $TEAM_ID.$EXTRA_ID" "$TMPDIR/entitlements$var.plist"
-    /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements$var.plist" "$line"
+
     var=$((var + 1))
 done <"$TMPDIR/components.txt"
 

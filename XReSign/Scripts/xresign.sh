@@ -8,18 +8,20 @@ set -e
 #  Copyright © 2017 xndrs. All rights reserved.
 #
 
-usage="Usage: $(basename "$0") -s APP_PATH -c CERT_NAME [-e ENTITLEMENTS_PATH_PATH] [-p PROV_PATH] [-b ID]
+usage="Usage: $(basename "$0") -i APP_PATH -c CERT_NAME [-epbdas ...]
 
--s  path to input app to sign
+-i  path to input app to sign
 -c  Common Name of signing certificate in Keychain
 -e  new entitlements to use for app (Optional)
 -p  path to mobile provisioning file (Optional)
 -b  new bundle identifier (Optional)
--a  allow app installation on all devices (Optional)"
+-d  enable app debugging (get-task-allow) (Optional)
+-a  force enable support for all devices (Optional)
+-s  force enable file sharing through iTunes (Optional)"
 
-while getopts s:c:e:p:b:a option; do
+while getopts i:c:e:p:b:das option; do
     case "${option}" in
-    s)
+    i)
         SOURCEIPA=${OPTARG}
         ;;
     c)
@@ -34,8 +36,14 @@ while getopts s:c:e:p:b:a option; do
     b)
         BUNDLEID=${OPTARG}
         ;;
+    d)
+        ENABLE_DEBUG=1
+        ;;
     a)
         ALL_DEVICES=1
+        ;;
+    s)
+        FILE_SHARING=1
         ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -89,6 +97,14 @@ else
     cp ${ENTITLEMENTS} "$TMPDIR/entitlements.plist"
 fi
 
+/usr/libexec/PlistBuddy -c "Delete :get-task-allow" "$TMPDIR/entitlements.plist" || true
+if [ -n "$ENABLE_DEBUG" ]; then
+    echo "Enabling app debugging"
+    /usr/libexec/PlistBuddy -c "Add :get-task-allow bool true" "$TMPDIR/entitlements.plist"
+else
+    echo "Disabling app debugging"
+fi
+
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APPDIR/Payload/$APPLICATION/Info.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
 
@@ -112,13 +128,19 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         fi
 
         if [[ -n "$ALL_DEVICES" ]]; then
-            echo "Patching supported devices"
+            echo "Force enabling support for all devices"
             /usr/libexec/PlistBuddy -c "Delete :UISupportedDevices" "$line/Info.plist" || true
             # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html
             /usr/libexec/PlistBuddy -c "Delete :UIDeviceFamily" "$line/Info.plist" || true
             /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily array" "$line/Info.plist"
             /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:0 integer 1" "$line/Info.plist"
             /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:1 integer 2" "$line/Info.plist"
+        fi
+
+        if [ -n "$FILE_SHARING" ]; then
+            echo "Force enabling file sharing"
+            /usr/libexec/PlistBuddy -c "Delete :UIFileSharingEnabled" "$line/Info.plist" || true
+            /usr/libexec/PlistBuddy -c "Add :UIFileSharingEnabled bool true" "$line/Info.plist"
         fi
 
         EXTRA_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$line/Info.plist")

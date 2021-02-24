@@ -15,14 +15,16 @@ In addition to GUI app, you can find, inside Scripts folder, xresign.sh script t
 ### Usage:
 
 ```
-$ ./xresign.sh -s APP_PATH -c CERT_NAME [-e ENTITLEMENTS_PATH_PATH] [-p PROV_PATH] [-b ID]
+$ ./xresign.sh -i APP_PATH -c CERT_NAME [-epbdas ...]
 
--s  path to input app to sign
+-i  path to input app to sign
 -c  Common Name of signing certificate in Keychain
 -e  new entitlements to use for app (Optional)
 -p  path to mobile provisioning file (Optional)
 -b  new bundle identifier (Optional)
--a  allow app installation on all devices (Optional)
+-d  enable app debugging (get-task-allow) (Optional)
+-a  force enable support for all devices (Optional)
+-s  force enable file sharing through iTunes (Optional)
 ```
 
 ## Acknowledgments

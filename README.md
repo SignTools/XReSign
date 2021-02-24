@@ -11,14 +11,14 @@ In addition to GUI app, you can find, inside Scripts folder, xresign.sh script t
 
 ### Usage:
 ```
-$ ./xresign.sh -s path -c certificate [-e entitlements] [-p path] [-b identifier]
+$ ./xresign.sh -s APP_PATH -c CERT_NAME [-e ENTITLEMENTS_PATH_PATH] [-p PROV_PATH] [-b ID]
 
-where:
--s  path to ipa file which you want to sign/resign
--c  signing certificate Common Name from Keychain
--e  new entitlements to change (Optional)
+-s  path to input app to sign
+-c  Common Name of signing certificate in Keychain
+-e  new entitlements to use for app (Optional)
 -p  path to mobile provisioning file (Optional)
--b  bundle identifier (Optional)
+-b  new bundle identifier (Optional)
+-a  allow app installation on all devices (Optional)
 ```
 ## Acknowledgments
 Inspired by such great tool as iReSign and other command line scripts to resign the ipa files. Unfortunately a lot of them not supported today. So this is an attempt to support resign the app bundle components both through the GUI application and through the command line script.

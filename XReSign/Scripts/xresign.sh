@@ -74,19 +74,19 @@ fi
 APPLICATION=$(ls "$APPDIR/Payload/")
 
 if [ -z "${MOBILEPROV}" ]; then
-    echo "Signing using app's existing provisioning profile"
+    echo "Using app's existing provisioning profile"
 else
-    echo "Signing using user-provided provisioning profile"
+    echo "Using user-provided provisioning profile"
     cp "$MOBILEPROV" "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision"
 fi
 
-echo "Extracting entitlements from provisioning profile"
 if [ -z "${ENTITLEMENTS}" ]; then
+    echo "Extracting entitlements from provisioning profile"
     security cms -D -i "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision" >"$TMPDIR/provisioning.plist"
     /usr/libexec/PlistBuddy -x -c 'Print:Entitlements' "$TMPDIR/provisioning.plist" >"$TMPDIR/entitlements.plist"
 else
+    echo "Using user-provided entitlements"
     cp ${ENTITLEMENTS} "$TMPDIR/entitlements.plist"
-    echo "${ENTITLEMENTS}"
 fi
 
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APPDIR/Payload/$APPLICATION/Info.plist")

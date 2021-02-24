@@ -144,7 +144,7 @@ mv "$filename" "$OUTDIR"
 echo "Cleaning temporary files"
 rm -rf "$APPDIR"
 rm "$TMPDIR/components.txt"
-rm "$TMPDIR/provisioning.plist"
+rm "$TMPDIR/provisioning.plist" || true
 rm "$TMPDIR/entitlements"*".plist"
 if [ -z "$(ls -A "$TMPDIR")" ]; then
     rm -d "$TMPDIR"

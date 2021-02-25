@@ -216,7 +216,7 @@ class ViewController: NSViewController {
             let pipe: Pipe = Pipe()
 
             task.launchPath = "/bin/sh"
-            task.arguments = [launchPath, "-s", ipaPath, "-c", developer, "-p", provisioning, "-b", bundle ?? "", "-e", entitlementsPath ?? ""]
+            task.arguments = [launchPath, "-i", ipaPath, "-c", developer, "-p", provisioning, "-b", bundle ?? "", "-e", entitlementsPath ?? ""]
             task.standardOutput = pipe
             task.standardError = pipe
 
@@ -228,7 +228,7 @@ class ViewController: NSViewController {
             print("\(buffer)")
 
             var success = false
-            if let _ = buffer.range(of: "XReSign FINISHED") {
+            if let _ = buffer.range(of: "XReSign finished") {
                 success = true
             }
 

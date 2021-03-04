@@ -112,10 +112,15 @@ fi
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print application-identifier' "$TMPDIR/entitlements.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
 
-# Don't set the bundle id to prov app id if the latter is wildcarcd, or the bundle id will end up being "*"
-if [[ -n "$ALIGN_APP_ID" ]] && [[ "$APP_ID" != "$TEAM_ID.*" ]]; then
-    echo "Setting bundle id to provisioning profile's app id $APP_ID"
-    BUNDLEID="${APP_ID#*.}"
+if [[ -n "$ALIGN_APP_ID" ]]; then
+    if [[ "$APP_ID" == "$TEAM_ID.*" ]]; then
+        echo "WARNING: Not setting bundle id to provisioning profile's app id because the latter is wildcard"
+        # Otherwise bundle id would be "*", and while that happens to work, it is invalid and could
+        # break in a future iOS update
+    else
+        echo "Setting bundle id to provisioning profile's app id $APP_ID"
+        BUNDLEID="${APP_ID#*.}"
+    fi
 fi
 
 echo "Building list of app components"

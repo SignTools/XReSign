@@ -102,7 +102,7 @@ if [ -n "$ENABLE_DEBUG" ]; then
     echo "Enabling app debugging"
     /usr/libexec/PlistBuddy -c "Add :get-task-allow bool true" "$TMPDIR/entitlements.plist"
 else
-    echo "Disabling app debugging"
+    echo "Disabled app debugging"
 fi
 
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APPDIR/Payload/$APPLICATION/Info.plist")

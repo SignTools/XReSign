@@ -105,7 +105,7 @@ else
     echo "Disabled app debugging"
 fi
 
-APP_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APPDIR/Payload/$APPLICATION/Info.plist")
+APP_ID=$(/usr/libexec/PlistBuddy -c 'Print application-identifier' "$TMPDIR/entitlements.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
 
 echo "Building list of app components"
@@ -144,8 +144,14 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         fi
 
         EXTRA_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$line/Info.plist")
-        echo "Signing with application ID $TEAM_ID.$EXTRA_ID"
-        /usr/libexec/PlistBuddy -c "Set :application-identifier $TEAM_ID.$EXTRA_ID" "$TMPDIR/entitlements$var.plist"
+        if [[ "$APP_ID" == "$TEAM_ID.$EXTRA_ID" ]] || [[ "$APP_ID" == "$TEAM_ID.*" ]]; then
+            echo "Setting entitlements app ID to $TEAM_ID.$EXTRA_ID"
+            /usr/libexec/PlistBuddy -c "Set :application-identifier $TEAM_ID.$EXTRA_ID" "$TMPDIR/entitlements$var.plist"
+        else
+            echo "WARNING: Entitlements app ID $APP_ID don't match app's bundle ID $TEAM_ID.$EXTRA_ID."
+            echo "Leaving entitlements as-is - the app will run, but all entitlements will be broken!"
+        fi
+
         /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements$var.plist" "$line"
     else
         echo "Signing with original entitlements"

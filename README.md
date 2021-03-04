@@ -25,6 +25,7 @@ $ ./xresign.sh -i APP_PATH -c CERT_NAME [-epbdas ...]
 -d  enable app debugging (get-task-allow) (Optional)
 -a  force enable support for all devices (Optional)
 -s  force enable file sharing through iTunes (Optional)
+-n  set bundle id to mobile provisioning app id (Optional)
 ```
 
 ## Acknowledgments

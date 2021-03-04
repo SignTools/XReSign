@@ -14,12 +14,13 @@ usage="Usage: $(basename "$0") -i APP_PATH -c CERT_NAME [-epbdas ...]
 -c  Common Name of signing certificate in Keychain
 -e  new entitlements to use for app (Optional)
 -p  path to mobile provisioning file (Optional)
--b  new bundle identifier (Optional)
+-b  new bundle id (Optional)
 -d  enable app debugging (get-task-allow) (Optional)
 -a  force enable support for all devices (Optional)
--s  force enable file sharing through iTunes (Optional)"
+-s  force enable file sharing through iTunes (Optional)
+-n  set bundle id to mobile provisioning app id (Optional)"
 
-while getopts i:c:e:p:b:das option; do
+while getopts i:c:e:p:b:dasn option; do
     case "${option}" in
     i)
         SOURCEIPA=${OPTARG}
@@ -44,6 +45,9 @@ while getopts i:c:e:p:b:das option; do
         ;;
     s)
         FILE_SHARING=1
+        ;;
+    n)
+        ALIGN_APP_ID=1
         ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -107,6 +111,11 @@ fi
 
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print application-identifier' "$TMPDIR/entitlements.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
+
+if [[ -n "$ALIGN_APP_ID" ]]; then
+    echo "Setting bundle id to provisioning profile's app id $APP_ID"
+    BUNDLEID="${APP_ID#*.}"
+fi
 
 echo "Building list of app components"
 find -d "$APPDIR" \( -name "*.app" -o -name "*.appex" -o -name "*.framework" -o -name "*.dylib" \) >"$TMPDIR/components.txt"

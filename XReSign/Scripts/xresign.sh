@@ -65,7 +65,7 @@ fi
 
 echo "XReSign started"
 
-OUTDIR=$(dirname "${SOURCEIPA}")
+OUTDIR=$(dirname "$SOURCEIPA")
 OUTDIR="$PWD/$OUTDIR"
 TMPDIR="$OUTDIR/tmp"
 APPDIR="$TMPDIR/app"
@@ -81,20 +81,20 @@ fi
 
 APPLICATION=$(ls "$APPDIR/Payload/")
 
-if [ -z "${MOBILEPROV}" ]; then
+if [ -z "$MOBILEPROV" ]; then
     echo "Using app's existing provisioning profile"
 else
     echo "Using user-provided provisioning profile"
     cp "$MOBILEPROV" "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision"
 fi
 
-if [ -z "${ENTITLEMENTS}" ]; then
+if [ -z "$ENTITLEMENTS" ]; then
     echo "Extracting entitlements from provisioning profile"
     security cms -D -i "$APPDIR/Payload/$APPLICATION/embedded.mobileprovision" >"$TMPDIR/provisioning.plist"
     /usr/libexec/PlistBuddy -x -c 'Print:Entitlements' "$TMPDIR/provisioning.plist" >"$TMPDIR/entitlements.plist"
 else
     echo "Using user-provided entitlements"
-    cp ${ENTITLEMENTS} "$TMPDIR/entitlements.plist"
+    cp "$ENTITLEMENTS" "$TMPDIR/entitlements.plist"
 fi
 
 /usr/libexec/PlistBuddy -c "Delete :get-task-allow" "$TMPDIR/entitlements.plist" || true
@@ -117,7 +117,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 
     if [[ "$line" == *".app" ]] || [[ "$line" == *".appex" ]]; then
         cp "$TMPDIR/entitlements.plist" "$TMPDIR/entitlements$var.plist"
-        if [[ -n "${BUNDLEID}" ]]; then
+        if [[ -n "$BUNDLEID" ]]; then
             if [[ "$line" == *".app" ]]; then
                 EXTRA_ID="$BUNDLEID"
             else

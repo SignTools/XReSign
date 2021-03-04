@@ -112,6 +112,7 @@ fi
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print application-identifier' "$TMPDIR/entitlements.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
 
+# Don't set the bundle id to prov app id if the latter is wildcarcd, or the bundle id will end up being "*"
 if [[ -n "$ALIGN_APP_ID" ]] && [[ "$APP_ID" != "$TEAM_ID.*" ]]; then
     echo "Setting bundle id to provisioning profile's app id $APP_ID"
     BUNDLEID="${APP_ID#*.}"
@@ -163,6 +164,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 
         /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements$var.plist" "$line"
     else
+        # Entitlements of frameworks, etc. don't matter, so leave them (potentially) invalid
         echo "Signing with original entitlements"
         /usr/bin/codesign --continue -f -s "$DEVELOPER" "$line"
     fi

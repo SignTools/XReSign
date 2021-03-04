@@ -112,7 +112,7 @@ fi
 APP_ID=$(/usr/libexec/PlistBuddy -c 'Print application-identifier' "$TMPDIR/entitlements.plist")
 TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print com.apple.developer.team-identifier' "$TMPDIR/entitlements.plist")
 
-if [[ -n "$ALIGN_APP_ID" ]]; then
+if [[ -n "$ALIGN_APP_ID" ]] && [[ "$APP_ID" != "$TEAM_ID.*" ]]; then
     echo "Setting bundle id to provisioning profile's app id $APP_ID"
     BUNDLEID="${APP_ID#*.}"
 fi

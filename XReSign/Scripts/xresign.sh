@@ -18,9 +18,10 @@ usage="Usage: $(basename "$0") -i APP_PATH -c CERT_NAME [-epbdas ...]
 -d  enable app debugging (get-task-allow) (Optional)
 -a  force enable support for all devices (Optional)
 -s  force enable file sharing through iTunes (Optional)
--n  set bundle id to mobile provisioning app id (Optional)"
+-n  set bundle id to mobile provisioning app id (Optional)
+-w  write bundle id to file (Optional)"
 
-while getopts i:c:e:p:b:dasn option; do
+while getopts i:c:e:p:b:dasnw: option; do
     case "${option}" in
     i)
         SOURCEIPA=${OPTARG}
@@ -48,6 +49,9 @@ while getopts i:c:e:p:b:dasn option; do
         ;;
     n)
         ALIGN_APP_ID=1
+        ;;
+    w)
+        BUNDLEID_SAVE_FILE=${OPTARG}
         ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -165,6 +169,11 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         else
             echo "WARNING: Provisioning profile's app ID $APP_ID doesn't match component's bundle ID $TEAM_ID.$EXTRA_ID."
             echo "Leaving original entitlements - the app will run, but all entitlements will be broken!"
+        fi
+
+        if [[ "$line" == *".app" ]]; then
+            echo "Writing bundle id to file"
+            echo "$EXTRA_ID" >"$BUNDLEID_SAVE_FILE"
         fi
 
         /usr/bin/codesign --continue -f -s "$DEVELOPER" --entitlements "$TMPDIR/entitlements$var.plist" "$line"

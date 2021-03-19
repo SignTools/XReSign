@@ -171,7 +171,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
             echo "Leaving original entitlements - the app will run, but all entitlements will be broken!"
         fi
 
-        if [[ "$line" == *".app" ]]; then
+        if [ -n "$BUNDLEID_SAVE_FILE" ] && [[ "$line" == *".app" ]]; then
             echo "Writing bundle id to file"
             echo "$EXTRA_ID" >"$BUNDLEID_SAVE_FILE"
         fi

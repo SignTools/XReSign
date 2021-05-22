@@ -1,5 +1,7 @@
 # XReSign
 
+> ## :warning: This repo is no longer supported. Future versions of the script can be found at [ios-signer-ci](https://github.com/SignTools/ios-signer-ci). The GUI is abandoned.
+
 XReSign allows you to sign or resign unencrypted ipa-files with certificate for which you hold the corresponding private key. Checked for developer, ad-hoc and enterprise distribution.
 
 ## How to use
